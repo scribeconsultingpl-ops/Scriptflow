@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ScriptFlow — Scribe Consulting</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f5;color:#1a1a1a;font-size:13px;}
+.app{display:flex;height:100vh;background:#fff;}
+.sidebar{width:175px;border-right:1px solid #e5e5e5;background:#fafafa;flex-shrink:0;display:flex;flex-direction:column;overflow-y:auto;}
+.sb-logo{padding:14px 16px;border-bottom:1px solid #e5e5e5;}
+.sb-logo span{font-size:14px;font-weight:600;color:#1a1a1a;display:block;}
+.sb-logo small{font-size:10px;color:#999;margin-top:1px;display:block;}
+.nav{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;font-size:12px;color:#666;transition:background 0.1s;white-space:nowrap;}
+.nav:hover{background:#fff;color:#1a1a1a;}
+.nav.active{background:#fff;color:#1a1a1a;font-weight:500;border-right:2px solid #1a1a1a;}
+.nav svg{width:13px;height:13px;opacity:0.5;flex-shrink:0;}
+.nav.active svg{opacity:1;}
+.sb-sep{height:1px;background:#e5e5e5;margin:4px 16px;}
+.sb-group{font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:0.7px;padding:8px 16px 3px;}
+.main{flex:1;overflow-y:auto;padding:20px;}
+.sec{display:none;}.sec.active{display:block;}
+.stitle{font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:3px;}
+.ssub{font-size:11px;color:#999;margin-bottom:16px;}
+.clabel{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;}
+.card{border:1px solid #e5e5e5;border-radius:8px;padding:12px;background:#fff;}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.left-col{display:flex;flex-direction:column;gap:12px;}
+.right-col{display:flex;flex-direction:column;gap:12px;}
+.upload-area{border:1px dashed #ddd;border-radius:8px;padding:12px;text-align:center;cursor:pointer;transition:background 0.15s;}
+.upload-area:hover{background:#f9f9f9;}
+.upload-name{font-size:11px;font-weight:500;color:#666;margin-top:3px;}
+.upload-hint{font-size:10px;color:#aaa;margin-top:1px;}
+input[type=file]{display:none;}
+.sel-btn{width:100%;text-align:left;background:#f5f5f5;border:1px solid #e5e5e5;border-radius:8px;padding:7px 10px;font-size:11px;color:#666;cursor:pointer;display:flex;justify-content:space-between;align-items:center;}
+.sel-btn:hover{border-color:#ccc;color:#1a1a1a;}
+.tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;}
+.tag{padding:3px 9px;font-size:11px;border:1px solid #e5e5e5;border-radius:12px;cursor:pointer;color:#666;background:#fff;transition:all 0.1s;user-select:none;white-space:nowrap;}
+.tag:hover{border-color:#999;color:#1a1a1a;}
+.tag.sel{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.cdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:3px;vertical-align:middle;border:0.5px solid rgba(0,0,0,0.15);}
+.preview-panel{background:#f9f9f9;border-radius:8px;padding:10px;flex:1;overflow-y:auto;min-height:180px;}
+.preview-label{font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:5px;}
+.preview-content{font-size:11px;color:#555;line-height:1.6;white-space:pre-wrap;background:#fff;border:1px solid #e5e5e5;border-radius:6px;padding:8px;max-height:120px;overflow-y:auto;}
+.preview-empty{font-size:11px;color:#bbb;font-style:italic;}
+.var-input{width:100%;font-size:11px;padding:7px 9px;border:1px solid #e5e5e5;border-radius:8px;background:#f5f5f5;color:#1a1a1a;font-family:inherit;margin-top:6px;}
+.ip-textarea{width:100%;font-size:11px;padding:8px 9px;border:1px solid #e5e5e5;border-radius:8px;background:#f5f5f5;color:#1a1a1a;font-family:inherit;resize:vertical;min-height:70px;}
+.ip-textarea:focus{outline:none;border-color:#999;}
+.ip-actions{display:flex;align-items:center;gap:6px;margin-top:5px;}
+.ip-save-btn{padding:4px 10px;font-size:11px;border:1px solid #e5e5e5;border-radius:8px;cursor:pointer;background:#fff;color:#666;}
+.ip-save-btn:hover{background:#f5f5f5;color:#1a1a1a;}
+.ip-saved{font-size:10px;color:#3a7d3a;display:none;}
+.gen-btn{width:100%;padding:10px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;margin-top:12px;transition:opacity 0.15s;}
+.gen-btn:hover{opacity:0.85;}
+.gen-btn:disabled{opacity:0.35;cursor:not-allowed;}
+.result-area{margin-top:14px;display:none;}
+.rtabs{display:flex;gap:4px;margin-bottom:8px;}
+.rtab{padding:4px 12px;font-size:11px;border:1px solid #e5e5e5;border-radius:8px;cursor:pointer;background:#fff;color:#666;}
+.rtab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.rcontent{background:#f5f5f5;border-radius:8px;padding:12px;font-size:11px;color:#555;line-height:1.7;max-height:200px;overflow-y:auto;white-space:pre-wrap;}
+.racts{display:flex;gap:6px;margin-top:8px;}
+.ract{flex:1;padding:7px;font-size:11px;border:1px solid #e5e5e5;border-radius:8px;cursor:pointer;background:#fff;color:#666;}
+.ract:hover{background:#f5f5f5;}
+.ract.fav{color:#b8760f;border-color:#e8a820;}
+.ract.fav:hover{background:#fef9ee;}
+.moverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:100;align-items:center;justify-content:center;}
+.moverlay.open{display:flex;}
+.modal{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:16px;width:350px;max-height:440px;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.12);}
+.mhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.mhdr h3{font-size:14px;font-weight:600;}
+.mclose{background:none;border:none;cursor:pointer;font-size:16px;color:#aaa;}
+.mlist{overflow-y:auto;flex:1;}
+.mitem{padding:9px 11px;border:1px solid #e5e5e5;border-radius:8px;margin-bottom:5px;cursor:pointer;}
+.mitem:hover{border-color:#ccc;background:#f9f9f9;}
+.mitem.sel{border-color:#1a1a1a;}
+.mitem-name{font-size:12px;font-weight:500;color:#1a1a1a;display:flex;align-items:center;gap:5px;}
+.mitem-desc{font-size:10px;color:#aaa;margin-top:2px;}
+.mnew{margin-top:8px;padding:7px;width:100%;font-size:11px;border:1px dashed #ddd;border-radius:8px;cursor:pointer;background:#fff;color:#666;}
+.mconfirm{margin-top:6px;padding:9px;width:100%;font-size:12px;font-weight:500;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;}
+.save-modal{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:18px;width:320px;box-shadow:0 8px 32px rgba(0,0,0,0.12);}
+.save-modal h3{font-size:14px;font-weight:600;margin-bottom:4px;}
+.save-modal p{font-size:11px;color:#aaa;margin-bottom:12px;}
+.save-modal input{width:100%;font-size:11px;padding:7px 9px;border:1px solid #e5e5e5;border-radius:8px;background:#f5f5f5;color:#1a1a1a;font-family:inherit;margin-bottom:7px;}
+.save-opts{display:flex;flex-direction:column;gap:7px;margin-bottom:14px;}
+.save-opt{display:flex;align-items:center;gap:8px;font-size:12px;color:#555;cursor:pointer;}
+.save-opt input[type=checkbox]{cursor:pointer;width:14px;height:14px;}
+.save-modal-acts{display:flex;gap:7px;}
+.sm-ok{flex:1;padding:8px;font-size:12px;font-weight:500;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;}
+.sm-cancel{flex:1;padding:8px;font-size:12px;border:1px solid #e5e5e5;border-radius:8px;cursor:pointer;background:#fff;color:#666;}
+.prev-modal{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:18px;width:560px;max-height:600px;display:flex;flex-direction:column;box-shadow:0 8px 32px rgba(0,0,0,0.12);}
+.prev-tabs{display:flex;gap:4px;margin-bottom:10px;}
+.prev-tab{padding:4px 14px;font-size:11px;border:1px solid #e5e5e5;border-radius:8px;cursor:pointer;background:#fff;color:#666;}
+.prev-tab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.prev-body{flex:1;overflow-y:auto;background:#f5f5f5;border-radius:8px;padding:14px;font-size:11px;color:#555;line-height:1.8;white-space:pre-wrap;}
+.prev-acts{display:flex;gap:8px;margin-top:12px;}
+.pma{flex:1;padding:8px;font-size:12px;border:1px solid #e5e5e5;border-radius:8px;cursor:pointer;background:#fff;color:#666;}
+.pma:hover{background:#f5f5f5;}
+.pma.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.pma.fav{color:#b8760f;border-color:#e8a820;}
+.lhdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.add-btn{padding:5px 11px;font-size:11px;border:1px solid #e5e5e5;border-radius:8px;cursor:pointer;background:#fff;color:#666;}
+.add-btn:hover{background:#f5f5f5;}
+.litem{border:1px solid #e5e5e5;border-radius:8px;padding:10px 12px;margin-bottom:7px;}
+.lhd{display:flex;justify-content:space-between;align-items:flex-start;}
+.lname{font-size:12px;font-weight:500;color:#1a1a1a;display:flex;align-items:center;gap:4px;}
+.lacts{display:flex;gap:4px;}
+.ibtn{background:none;border:none;cursor:pointer;font-size:12px;color:#aaa;padding:2px 5px;border-radius:4px;}
+.ibtn:hover{color:#1a1a1a;background:#f5f5f5;}
+.ldesc{font-size:11px;color:#aaa;margin-top:2px;}
+.lprev{font-size:10px;color:#666;margin-top:6px;background:#f5f5f5;padding:6px 8px;border-radius:6px;line-height:1.5;max-height:44px;overflow:hidden;}
+.eform{margin-top:8px;display:none;}
+.eform.open{display:block;}
+.eform input,.eform textarea{width:100%;margin-bottom:5px;font-size:11px;padding:6px 8px;border:1px solid #e5e5e5;border-radius:8px;background:#f5f5f5;color:#1a1a1a;font-family:inherit;}
+.eform textarea{height:70px;resize:vertical;}
+.eacts{display:flex;gap:5px;}
+.sbtn{padding:5px 11px;font-size:11px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;}
+.cbtn{padding:5px 11px;font-size:11px;border:1px solid #e5e5e5;border-radius:8px;cursor:pointer;background:#fff;color:#666;}
+.fitem{border:1px solid #e5e5e5;border-radius:8px;padding:10px 12px;margin-bottom:7px;}
+.fhd{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;}
+.fname{font-size:12px;font-weight:500;color:#1a1a1a;}
+.ubadge{display:flex;align-items:center;gap:3px;font-size:10px;color:#aaa;background:#f5f5f5;padding:2px 7px;border-radius:10px;}
+.ubtn{background:none;border:none;cursor:pointer;font-size:13px;color:#666;padding:0 2px;line-height:1;}
+.ltabs{display:flex;gap:3px;margin-bottom:6px;}
+.ltab{font-size:10px;padding:2px 8px;border:1px solid #e5e5e5;border-radius:10px;cursor:pointer;color:#666;background:#fff;}
+.ltab.active{background:#f5f5f5;color:#1a1a1a;font-weight:500;}
+.fprev{font-size:10px;color:#666;background:#f5f5f5;padding:7px;border-radius:6px;line-height:1.5;max-height:65px;overflow:hidden;white-space:pre-wrap;}
+.facts{display:flex;gap:5px;margin-top:7px;}
+.cmitem{border:1px solid #e5e5e5;border-radius:8px;padding:10px 12px;margin-bottom:7px;}
+.ppv-row{display:grid;grid-template-columns:95px 1fr;gap:6px;align-items:center;margin-bottom:3px;}
+.ppv-num{font-size:10px;color:#aaa;}
+.ppv-val{font-size:11px;color:#555;background:#f5f5f5;padding:4px 7px;border-radius:5px;}
+.ppved{display:grid;grid-template-columns:80px 1fr 22px;gap:4px;align-items:center;margin-bottom:4px;}
+.ppved input{font-size:10px;padding:5px 7px;border:1px solid #e5e5e5;border-radius:6px;background:#f5f5f5;color:#1a1a1a;font-family:inherit;width:100%;}
+.dppv{background:none;border:none;cursor:pointer;font-size:12px;color:#aaa;}
+.dppv:hover{color:#e24b4a;}
+.appv{font-size:10px;padding:3px 8px;border:1px dashed #ddd;border-radius:6px;cursor:pointer;background:#fff;color:#666;margin-top:4px;}
+.db-item{border:1px solid #e5e5e5;border-radius:8px;padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;}
+.db-name{font-size:12px;font-weight:500;color:#1a1a1a;}
+.db-meta{font-size:10px;color:#aaa;margin-top:2px;}
+.db-add{border:1px dashed #ddd;border-radius:8px;padding:16px;text-align:center;cursor:pointer;margin-bottom:12px;}
+.db-add:hover{background:#f9f9f9;}
+.p-section{margin-bottom:22px;}
+.p-stitle{font-size:11px;font-weight:600;color:#1a1a1a;text-transform:uppercase;letter-spacing:0.5px;padding:8px 0 7px;border-bottom:1px solid #e5e5e5;margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.p-row{margin-bottom:12px;}
+.p-label{font-size:11px;font-weight:500;color:#1a1a1a;margin-bottom:2px;}
+.p-desc{font-size:10px;color:#aaa;margin-bottom:5px;}
+.p-textarea{width:100%;font-size:11px;padding:8px 9px;border:1px solid #e5e5e5;border-radius:8px;background:#f5f5f5;color:#1a1a1a;font-family:inherit;resize:vertical;}
+.p-save{padding:5px 11px;font-size:11px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;cursor:pointer;margin-top:5px;}
+.p-saved{font-size:10px;color:#3a7d3a;display:none;margin-left:6px;}
+.cfg-input{width:100%;font-size:11px;padding:7px 9px;border:1px solid #e5e5e5;border-radius:8px;background:#f5f5f5;color:#1a1a1a;font-family:inherit;}
+.bfr{background:#e6f1fb;color:#185fa5;padding:1px 7px;border-radius:8px;font-size:10px;}
+.ben{background:#eaf3de;color:#3b6d11;padding:1px 7px;border-radius:8px;font-size:10px;}
+.star{color:#e8a820;font-size:11px;}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:5px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty{text-align:center;padding:32px 20px;color:#aaa;font-size:12px;}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+<div class="app" id="app">
+<div class="sidebar">
+  <div class="sb-logo"><span>ScriptFlow</span><small>Scribe Consulting</small></div>
+  <div class="sb-group">Scripts</div>
+  <div class="nav active" onclick="nav('variation',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h10"/><path d="M11 6l3 2-3 2"/></svg>Variation</div>
+  <div class="nav" onclick="nav('generation',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg>Génération</div>
+  <div class="sb-sep"></div>
+  <div class="sb-group">Bibliothèque</div>
+  <div class="nav" onclick="nav('favs',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.8 3.6 4 .6-2.9 2.8.7 4L8 11l-3.6 1.9.7-4L2.1 6.2l4-.6z"/></svg>Favoris</div>
+  <div class="nav" onclick="nav('database',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><ellipse cx="8" cy="4" rx="6" ry="2"/><path d="M2 4v4c0 1.1 2.7 2 6 2s6-.9 6-2V4M2 8v4c0 1.1 2.7 2 6 2s6-.9 6-2V8"/></svg>Base de données</div>
+  <div class="nav" onclick="nav('cmdmedia',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="10" rx="2"/><path d="M6 6l4 2-4 2V6z"/></svg>Commandes média</div>
+  <div class="sb-sep"></div>
+  <div class="sb-group">Paramètres</div>
+  <div class="nav" onclick="nav('prompts',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h12M2 6h9M2 9h10M2 12h7"/></svg>Prompts</div>
+  <div class="nav" onclick="nav('config',this)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.1 3.1l1.4 1.4M11.5 11.5l1.4 1.4M3.1 12.9l1.4-1.4M11.5 4.5l1.4-1.4"/></svg>Configuration</div>
+</div>
+
+<div class="main">
+<!-- VARIATION -->
+<div class="sec active" id="sec-variation">
+  <p class="stitle">Variation</p>
+  <p class="ssub">Upload un script source — l'IA varie en s'appuyant sur la base de données</p>
+  <div class="two-col">
+    <div class="left-col">
+      <div class="card">
+        <div class="clabel">Script source</div>
+        <div class="upload-area" onclick="document.getElementById('varFile').click()">
+          <div style="font-size:20px;">📄</div>
+          <div class="upload-name" id="varFileName">Cliquer pour uploader</div>
+          <div class="upload-hint">.xlsx ou .pdf</div>
+        </div>
+        <input type="file" id="varFile" accept=".xlsx,.pdf" onchange="handleFile(this,'varFileName','var')">
+      </div>
+      <div class="card">
+        <div class="clabel">Commande média</div>
+        <button class="sel-btn" onclick="openModal('media','var')"><span id="varMediaName">Sélectionner</span><span style="font-size:9px;">▼</span></button>
+        <div class="clabel" style="margin-top:10px;">Prompt spécifique</div>
+        <textarea class="ip-textarea" id="var-inline-prompt" placeholder="Écris un prompt spécifique pour cette variation..."></textarea>
+        <div class="ip-actions">
+          <button class="ip-save-btn" onclick="openSaveModal('var')">💾 Enregistrer le prompt</button>
+          <span class="ip-saved" id="var-ip-saved">✓ Enregistré</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="clabel">Niche (multi)</div>
+        <div class="tags" id="vt-niche">
+          <span class="tag" onclick="toggleTag(this,'var','niche')">GFE</span>
+          <span class="tag" onclick="toggleTag(this,'var','niche')">Normale</span>
+          <span class="tag" onclick="toggleTag(this,'var','niche')">MILF</span>
+          <span class="tag" onclick="toggleTag(this,'var','niche')">Gamer</span>
+        </div>
+        <div class="clabel" style="margin-top:8px;">Physique (multi)</div>
+        <div class="tags" id="vt-physique">
+          <span class="tag" onclick="toggleTag(this,'var','physique')">Gros seins</span>
+          <span class="tag" onclick="toggleTag(this,'var','physique')">Grosses fesses</span>
+          <span class="tag" onclick="toggleTag(this,'var','physique')">Fine</span>
+          <span class="tag" onclick="toggleTag(this,'var','physique')">Chubby</span>
+          <span class="tag" onclick="toggleTag(this,'var','physique')">Fat</span>
+          <span class="tag" onclick="toggleTag(this,'var','physique')">Grande</span>
+          <span class="tag" onclick="toggleTag(this,'var','physique')">Petite</span>
+        </div>
+        <div class="clabel" style="margin-top:8px;">Lingerie</div>
+        <div class="tags" id="vt-lingerie">
+          <span class="tag" onclick="toggleTag(this,'var','lingerie')"><span class="cdot" style="background:#1a1a1a;"></span>Noire</span>
+          <span class="tag" onclick="toggleTag(this,'var','lingerie')"><span class="cdot" style="background:#f5f0eb;border-color:#ccc;"></span>Blanche</span>
+          <span class="tag" onclick="toggleTag(this,'var','lingerie')"><span class="cdot" style="background:#e8b4b8;"></span>Rose</span>
+          <span class="tag" onclick="toggleTag(this,'var','lingerie')"><span class="cdot" style="background:#c8102e;"></span>Rouge</span>
+          <span class="tag" onclick="toggleTag(this,'var','lingerie')"><span class="cdot" style="background:#d4a0b0;"></span>Nude</span>
+          <span class="tag" onclick="toggleTag(this,'var','lingerie')"><span class="cdot" style="background:#6a0dad;"></span>Violette</span>
+          <span class="tag" onclick="toggleTag(this,'var','lingerie')"><span class="cdot" style="background:#1b4f8a;"></span>Bleue</span>
+          <span class="tag" onclick="toggleTag(this,'var','lingerie')"><span class="cdot" style="background:#2d6a4f;"></span>Verte</span>
+          <span class="tag" onclick="toggleTag(this,'var','lingerie')"><span class="cdot" style="background:#b8860b;"></span>Dorée</span>
+          <span class="tag" onclick="toggleTag(this,'var','lingerie')"><span class="cdot" style="background:#708090;"></span>Argentée</span>
+        </div>
+        <input class="var-input" id="varName" type="text" placeholder="Nom de la variation (ex: GYM_Variant_B)">
+      </div>
+    </div>
+    <div class="right-col">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;">
+        <div class="clabel">Aperçu commande média</div>
+        <div class="preview-panel" id="varPreview"><div class="preview-empty">Sélectionne une commande média pour voir son contenu ici.</div></div>
+      </div>
+    </div>
+  </div>
+  <button class="gen-btn" id="varBtn" onclick="generate('var')" disabled>Générer variation FR + EN</button>
+  <div class="result-area" id="varResult">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+      <div class="rtabs"><button class="rtab active" onclick="switchTab('var','fr',this)"><span class="bfr">FR</span></button><button class="rtab" onclick="switchTab('var','en',this)"><span class="ben">EN</span></button></div>
+      <span style="font-size:10px;color:#aaa;" id="varGenName"></span>
+    </div>
+    <div class="rcontent" id="varContent"></div>
+    <div class="racts">
+      <button class="ract" onclick="openPrevModal('var')">👁 Aperçu</button>
+      <button class="ract" onclick="dlResult('var')">⬇ Download</button>
+      <button class="ract fav" onclick="saveToFavs('var')">★ Favori</button>
+      <button class="ract" onclick="clearResult('var')">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- GÉNÉRATION -->
+<div class="sec" id="sec-generation">
+  <p class="stitle">Génération</p>
+  <p class="ssub">L'IA crée un script neuf depuis la base de données — FR + EN</p>
+  <div class="two-col">
+    <div class="left-col">
+      <div class="card">
+        <div class="clabel">Commande média</div>
+        <button class="sel-btn" onclick="openModal('media','gen')"><span id="genMediaName">Sélectionner</span><span style="font-size:9px;">▼</span></button>
+        <div class="clabel" style="margin-top:10px;">Prompt spécifique</div>
+        <textarea class="ip-textarea" id="gen-inline-prompt" placeholder="Écris un prompt spécifique pour ce script..."></textarea>
+        <div class="ip-actions">
+          <button class="ip-save-btn" onclick="openSaveModal('gen')">💾 Enregistrer le prompt</button>
+          <span class="ip-saved" id="gen-ip-saved">✓ Enregistré</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="clabel">Niche (multi)</div>
+        <div class="tags" id="gt-niche">
+          <span class="tag" onclick="toggleTag(this,'gen','niche')">GFE</span>
+          <span class="tag" onclick="toggleTag(this,'gen','niche')">Normale</span>
+          <span class="tag" onclick="toggleTag(this,'gen','niche')">MILF</span>
+          <span class="tag" onclick="toggleTag(this,'gen','niche')">Gamer</span>
+        </div>
+        <div class="clabel" style="margin-top:8px;">Physique (multi)</div>
+        <div class="tags" id="gt-physique">
+          <span class="tag" onclick="toggleTag(this,'gen','physique')">Gros seins</span>
+          <span class="tag" onclick="toggleTag(this,'gen','physique')">Grosses fesses</span>
+          <span class="tag" onclick="toggleTag(this,'gen','physique')">Fine</span>
+          <span class="tag" onclick="toggleTag(this,'gen','physique')">Chubby</span>
+          <span class="tag" onclick="toggleTag(this,'gen','physique')">Fat</span>
+          <span class="tag" onclick="toggleTag(this,'gen','physique')">Grande</span>
+          <span class="tag" onclick="toggleTag(this,'gen','physique')">Petite</span>
+        </div>
+        <div class="clabel" style="margin-top:8px;">Lingerie</div>
+        <div class="tags" id="gt-lingerie">
+          <span class="tag" onclick="toggleTag(this,'gen','lingerie')"><span class="cdot" style="background:#1a1a1a;"></span>Noire</span>
+          <span class="tag" onclick="toggleTag(this,'gen','lingerie')"><span class="cdot" style="background:#f5f0eb;border-color:#ccc;"></span>Blanche</span>
+          <span class="tag" onclick="toggleTag(this,'gen','lingerie')"><span class="cdot" style="background:#e8b4b8;"></span>Rose</span>
+          <span class="tag" onclick="toggleTag(this,'gen','lingerie')"><span class="cdot" style="background:#c8102e;"></span>Rouge</span>
+          <span class="tag" onclick="toggleTag(this,'gen','lingerie')"><span class="cdot" style="background:#d4a0b0;"></span>Nude</span>
+          <span class="tag" onclick="toggleTag(this,'gen','lingerie')"><span class="cdot" style="background:#6a0dad;"></span>Violette</span>
+          <span class="tag" onclick="toggleTag(this,'gen','lingerie')"><span class="cdot" style="background:#1b4f8a;"></span>Bleue</span>
+          <span class="tag" onclick="toggleTag(this,'gen','lingerie')"><span class="cdot" style="background:#2d6a4f;"></span>Verte</span>
+          <span class="tag" onclick="toggleTag(this,'gen','lingerie')"><span class="cdot" style="background:#b8860b;"></span>Dorée</span>
+          <span class="tag" onclick="toggleTag(this,'gen','lingerie')"><span class="cdot" style="background:#708090;"></span>Argentée</span>
+        </div>
+        <input class="var-input" id="genName" type="text" placeholder="Nom du script (ex: LINGERIE_Script_A)">
+      </div>
+    </div>
+    <div class="right-col">
+      <div class="card" style="flex:1;display:flex;flex-direction:column;">
+        <div class="clabel">Aperçu commande média</div>
+        <div class="preview-panel" id="genPreview"><div class="preview-empty">Sélectionne une commande média pour voir son contenu ici.</div></div>
+      </div>
+    </div>
+  </div>
+  <button class="gen-btn" id="genBtn" onclick="generate('gen')">Générer script FR + EN</button>
+  <div class="result-area" id="genResult">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+      <div class="rtabs"><button class="rtab active" onclick="switchTab('gen','fr',this)"><span class="bfr">FR</span></button><button class="rtab" onclick="switchTab('gen','en',this)"><span class="ben">EN</span></button></div>
+      <span style="font-size:10px;color:#aaa;" id="genGenName"></span>
+    </div>
+    <div class="rcontent" id="genContent"></div>
+    <div class="racts">
+      <button class="ract" onclick="openPrevModal('gen')">👁 Aperçu</button>
+      <button class="ract" onclick="dlResult('gen')">⬇ Download</button>
+      <button class="ract fav" onclick="saveToFavs('gen')">★ Favori</button>
+      <button class="ract" onclick="clearResult('gen')">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- FAVORIS -->
+<div class="sec" id="sec-favs">
+  <p class="stitle">Favoris</p><p class="ssub">Scripts sauvegardés avec compteur d'utilisations</p>
+  <div id="favList"></div>
+</div>
+
+<!-- BASE DE DONNÉES -->
+<div class="sec" id="sec-database">
+  <p class="stitle">Base de données</p><p class="ssub">Scripts de référence — l'IA s'en inspire pour le style et la structure</p>
+  <div class="db-add" onclick="document.getElementById('dbFile').click()">
+    <div style="font-size:22px;">📂</div>
+    <div style="font-size:12px;font-weight:500;color:#666;margin-top:4px;">Ajouter des scripts</div>
+    <div style="font-size:10px;color:#aaa;margin-top:2px;">.xlsx FR+EN — sélection multiple</div>
+  </div>
+  <input type="file" id="dbFile" accept=".xlsx" onchange="addToDb(this)" multiple>
+  <div id="dbList"></div>
+</div>
+
+<!-- COMMANDES MÉDIA -->
+<div class="sec" id="sec-cmdmedia">
+  <div class="lhdr"><div><p class="stitle">Commandes média</p><p class="ssub">Structures PPV sélectionnables à la génération</p></div><button class="add-btn" onclick="addMedia()">+ Nouvelle</button></div>
+  <div id="mediaList"></div>
+</div>
+
+<!-- PROMPTS -->
+<div class="sec" id="sec-prompts">
+  <p class="stitle">Prompts</p><p class="ssub">Tous tes prompts configurables en un seul endroit</p>
+  <div class="p-section">
+    <div class="p-stitle">Global</div>
+    <div class="p-row">
+      <div class="p-label">Prompt global</div>
+      <div class="p-desc">S'applique à toutes les générations et variations.</div>
+      <textarea class="p-textarea" id="p-global" rows="4" placeholder="Ex: Tu es expert en copywriting OnlyFans. Conserve toujours la structure et les tags (G1, G2, PPV, 💵, 🚫). NE TRADUIS PAS — réécris dans le style natif de chaque langue..."></textarea>
+      <button class="p-save" onclick="saveP2('global')">Enregistrer</button><span class="p-saved" id="ps2-global">✓</span>
+    </div>
+  </div>
+  <div class="p-section">
+    <div class="p-stitle"><span>Prompts spécifiques</span><button class="add-btn" style="font-size:10px;padding:3px 9px;" onclick="addPrompt()">+ Nouveau</button></div>
+    <div id="libList"></div>
+  </div>
+  <div class="p-section">
+    <div class="p-stitle">Langue — Français</div>
+    <div class="p-row">
+      <div class="p-label">Manière de parler</div>
+      <div class="p-desc">Registre, vocabulaire, ton général en français.</div>
+      <textarea class="p-textarea" id="p-fr-parler" rows="3" placeholder="Ex: Registre parlé, abréviations naturelles (t'as, j'suis), pas de points de suspension excessifs..."></textarea>
+      <button class="p-save" onclick="saveP2('fr-parler')">Enregistrer</button><span class="p-saved" id="ps2-fr-parler">✓</span>
+    </div>
+    <div class="p-row">
+      <div class="p-label">Manière de chatter</div>
+      <div class="p-desc">Style spécifique au chat OnlyFans en français.</div>
+      <textarea class="p-textarea" id="p-fr-chatter" rows="3" placeholder="Ex: Messages courts et rythmés, emojis placés naturellement, tension progressive..."></textarea>
+      <button class="p-save" onclick="saveP2('fr-chatter')">Enregistrer</button><span class="p-saved" id="ps2-fr-chatter">✓</span>
+    </div>
+  </div>
+  <div class="p-section">
+    <div class="p-stitle">Langue — English (US)</div>
+    <div class="p-row">
+      <div class="p-label">Manière de parler</div>
+      <div class="p-desc">Registre, vocabulaire, ton général en anglais américain.</div>
+      <textarea class="p-textarea" id="p-en-parler" rows="3" placeholder="Ex: American casual tone, contractions always (I'm, you're), confident and direct..."></textarea>
+      <button class="p-save" onclick="saveP2('en-parler')">Enregistrer</button><span class="p-saved" id="ps2-en-parler">✓</span>
+    </div>
+    <div class="p-row">
+      <div class="p-label">Manière de chatter</div>
+      <div class="p-desc">Style spécifique au chat OnlyFans en anglais américain.</div>
+      <textarea class="p-textarea" id="p-en-chatter" rows="3" placeholder="Ex: Short punchy messages, build anticipation before PPV, mix sweet and bold..."></textarea>
+      <button class="p-save" onclick="saveP2('en-chatter')">Enregistrer</button><span class="p-saved" id="ps2-en-chatter">✓</span>
+    </div>
+  </div>
+  <div class="p-section">
+    <div class="p-stitle">Niches</div>
+    <div id="p-niches-list"></div>
+  </div>
+  <div class="p-section">
+    <div class="p-stitle">Physique</div>
+    <div id="p-physique-list"></div>
+  </div>
+  <div class="p-section">
+    <div class="p-stitle">Scripts neufs (Génération)</div>
+    <div class="p-row">
+      <div class="p-label">Prompt scripts neufs</div>
+      <div class="p-desc">Instructions générales pour créer des scripts de zéro.</div>
+      <textarea class="p-textarea" id="p-neufs" rows="4" placeholder="Ex: Crée un script complet avec accroche progressive, montée en intensité, PPV aux positions de la commande média, variations 💵 et 🚫..."></textarea>
+      <button class="p-save" onclick="saveP2('neufs')">Enregistrer</button><span class="p-saved" id="ps2-neufs">✓</span>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div class="sec" id="sec-config">
+  <p class="stitle">Configuration</p><p class="ssub">Clé API et paramètres</p>
+  <div style="max-width:400px;">
+    <div class="p-row">
+      <div class="p-label">Clé API Mistral</div>
+      <div class="p-desc">Depuis api.mistral.ai — stockée dans le navigateur</div>
+      <input type="password" class="cfg-input" id="apiKey" placeholder="Ta clé API Mistral...">
+      <button class="p-save" style="margin-top:6px;" onclick="saveConfig()">Enregistrer</button>
+      <span class="p-saved" id="cfgSaved">✓ Sauvegardé</span>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- MODAL MÉDIA -->
+<div class="moverlay" id="moverlay" onclick="closeModalOut(event)">
+  <div class="modal">
+    <div class="mhdr"><h3 id="mtitle">Choisir une commande média</h3><button class="mclose" onclick="closeModal()">✕</button></div>
+    <div class="mlist" id="mlist"></div>
+    <button class="mnew" onclick="modalNew()">+ Créer une nouvelle commande</button>
+    <button class="mconfirm" onclick="confirmModal()">Confirmer</button>
+  </div>
+</div>
+
+<!-- MODAL SAVE PROMPT -->
+<div class="moverlay" id="saveOverlay" onclick="closeSaveOut(event)">
+  <div class="save-modal">
+    <h3>Enregistrer le prompt</h3>
+    <p>Choisis où tu veux l'enregistrer</p>
+    <input type="text" id="savePromptName" placeholder="Nom du prompt (ex: Soumission — gym)">
+    <input type="text" id="savePromptDesc" placeholder="Description courte (optionnel)">
+    <div class="save-opts">
+      <label class="save-opt"><input type="checkbox" id="saveAsSpecific" checked> Prompt spécifique (sélectionnable à la génération)</label>
+      <label class="save-opt"><input type="checkbox" id="saveAsNeufs"> Prompt scripts neufs (Génération)</label>
+    </div>
+    <div class="save-modal-acts">
+      <button class="sm-ok" onclick="confirmSavePrompt()">Enregistrer</button>
+      <button class="sm-cancel" onclick="closeSaveModal()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL APERÇU -->
+<div class="moverlay" id="prevOverlay" onclick="closePrevOut(event)">
+  <div class="prev-modal">
+    <div class="mhdr"><h3 id="prevTitle">Aperçu complet</h3><button class="mclose" onclick="closePrevModal()">✕</button></div>
+    <div class="prev-tabs">
+      <button class="prev-tab active" onclick="switchPrevTab('fr',this)"><span class="bfr">FR</span></button>
+      <button class="prev-tab" onclick="switchPrevTab('en',this)"><span class="ben">EN</span></button>
+    </div>
+    <div class="prev-body" id="prevBody"></div>
+    <div class="prev-acts">
+      <button class="pma fav" onclick="saveFromPreview()">★ Favori</button>
+      <button class="pma primary" onclick="dlFromPreview()">⬇ Download</button>
+      <button class="pma" onclick="closePrevModal()">Fermer</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const S={
+  prompts:[],
+  medias:[
+    {id:1,name:"Standard 3 PPV",desc:"Structure classique 3 paliers",ppvs:[{label:"PPV 1 — Teaser",content:"Photo haut relevé, seins partiellement visibles"},{label:"PPV 2 — Mid",content:"Vidéo 30s lingerie, strip lent"},{label:"PPV 3 — Full",content:"Vidéo 1min nu intégral"}]},
+  ],
+  favs:[],
+  database:[],
+  pfields:{global:'','fr-parler':'','fr-chatter':'','en-parler':'','en-chatter':'',neufs:'',niches:{GFE:'',Normale:'',MILF:'',Gamer:''},physique:{'Gros seins':'','Grosses fesses':'','Fine':'','Chubby':'','Fat':'','Grande':'','Petite':''}},
+  apiKey:localStorage.getItem('sf_apikey')||'',
+  modal:{ctx:'',tmpId:null},
+  saveCtx:'',
+  var:{mediaId:null,tags:{niche:[],physique:[],lingerie:[]},result:{fr:'',en:''},fileLoaded:false},
+  gen:{mediaId:null,tags:{niche:[],physique:[],lingerie:[]},result:{fr:'',en:''}},
+  preview:{ctx:null,favId:null,lang:'fr'},
+};
+
+function nav(tab,el){
+  document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  if(el)el.classList.add('active');
+  document.getElementById('sec-'+tab).classList.add('active');
+  if(tab==='favs')renderFavs();
+  if(tab==='database')renderDb();
+  if(tab==='cmdmedia')renderMediaList();
+  if(tab==='prompts'){renderPromptPage();renderLib();}
+  if(tab==='config')document.getElementById('apiKey').value=S.apiKey;
+}
+
+function handleFile(inp,nameId,ctx){if(inp.files[0]){document.getElementById(nameId).textContent=inp.files[0].name;S[ctx].fileLoaded=true;document.getElementById('varBtn').disabled=false;}}
+function toggleTag(el,ctx,group){el.classList.toggle('sel');const val=el.textContent.trim();const arr=S[ctx].tags[group];const i=arr.indexOf(val);if(i>-1)arr.splice(i,1);else arr.push(val);}
+
+function openModal(mode,ctx){S.modal={mode,ctx,tmpId:S[ctx].mediaId};renderModalItems();document.getElementById('moverlay').classList.add('open');}
+function closeModal(){document.getElementById('moverlay').classList.remove('open');}
+function closeModalOut(e){if(e.target===document.getElementById('moverlay'))closeModal();}
+function renderModalItems(){
+  const list=document.getElementById('mlist');list.innerHTML='';
+  S.medias.forEach(m=>{
+    const d=document.createElement('div');d.className='mitem'+(m.id===S.modal.tmpId?' sel':'');
+    d.innerHTML=`<div class="mitem-name">${m.name}<span style="font-size:10px;color:#aaa;margin-left:auto;">${m.ppvs.length} PPV</span></div><div class="mitem-desc">${m.desc}</div>`;
+    d.onclick=()=>{document.querySelectorAll('#mlist .mitem').forEach(x=>x.classList.remove('sel'));d.classList.add('sel');S.modal.tmpId=m.id;};
+    list.appendChild(d);
+  });
+}
+function confirmModal(){
+  if(!S.modal.tmpId)return;
+  const{ctx}=S.modal;S[ctx].mediaId=S.modal.tmpId;
+  const m=S.medias.find(x=>x.id===S.modal.tmpId);
+  document.getElementById(ctx+'MediaName').textContent=m.name;
+  updatePreview(ctx);closeModal();
+}
+function updatePreview(ctx){
+  const panel=document.getElementById(ctx+'Preview');
+  const m=S[ctx].mediaId?S.medias.find(x=>x.id===S[ctx].mediaId):null;
+  if(!m){panel.innerHTML='<div class="preview-empty">Sélectionne une commande média pour voir son contenu ici.</div>';return;}
+  panel.innerHTML=`<div><div class="preview-label">${m.name} — ${m.ppvs.length} PPV</div><div class="preview-content">${m.ppvs.map(p=>`${p.label}:\n${p.content}`).join('\n\n')}</div></div>`;
+}
+function modalNew(){closeModal();nav('cmdmedia',document.querySelectorAll('.nav')[5]);setTimeout(addMedia,100);}
+
+function openSaveModal(ctx){
+  S.saveCtx=ctx;
+  document.getElementById('savePromptName').value='';
+  document.getElementById('savePromptDesc').value='';
+  document.getElementById('saveAsSpecific').checked=true;
+  document.getElementById('saveAsNeufs').checked=false;
+  document.getElementById('saveOverlay').classList.add('open');
+}
+function closeSaveModal(){document.getElementById('saveOverlay').classList.remove('open');}
+function closeSaveOut(e){if(e.target===document.getElementById('saveOverlay'))closeSaveModal();}
+function confirmSavePrompt(){
+  const name=document.getElementById('savePromptName').value.trim()||'Prompt sans nom';
+  const desc=document.getElementById('savePromptDesc').value.trim();
+  const content=document.getElementById(S.saveCtx+'-inline-prompt').value.trim();
+  if(!content){alert('Le prompt est vide.');return;}
+  if(document.getElementById('saveAsSpecific').checked)S.prompts.unshift({id:Date.now(),name,desc,content,fav:false});
+  if(document.getElementById('saveAsNeufs').checked){S.pfields.neufs=content;const el=document.getElementById('p-neufs');if(el)el.value=content;}
+  closeSaveModal();
+  const s=document.getElementById(S.saveCtx+'-ip-saved');s.style.display='inline';setTimeout(()=>s.style.display='none',2500);
+}
+
+function buildPrompt(ctx,sc=''){
+  const pf=S.pfields;const tags=S[ctx].tags;
+  const ip=document.getElementById(ctx+'-inline-prompt').value.trim();
+  const m=S[ctx].mediaId?S.medias.find(x=>x.id===S[ctx].mediaId):null;
+  const nicheP=tags.niche.map(n=>pf.niches[n]?`Niche ${n}: ${pf.niches[n]}`:'').filter(Boolean).join('\n');
+  const physP=tags.physique.map(ph=>pf.physique[ph]?`Physique ${ph}: ${pf.physique[ph]}`:'').filter(Boolean).join('\n');
+  const tagsStr=[tags.niche.length?'Niches: '+tags.niche.join(', '):'',tags.physique.length?'Physique: '+tags.physique.join(', '):'',tags.lingerie.length?'Lingerie: '+tags.lingerie.map(t=>t.replace(/[^\w\s]/gi,'').trim()).join(', '):''].filter(Boolean).join(' | ');
+  const mediaStr=m?`\nCOMMANDE MÉDIA — ${m.name}:\n${m.ppvs.map(p=>`  ${p.label}: ${p.content}`).join('\n')}\nChaque texte PPV doit correspondre au média décrit.`:'';
+  const dbRef=S.database.length
+    ? `\nBASE DE DONNÉES — ${S.database.length} scripts de référence (STYLE, RYTHME, STRUCTURE À RESPECTER):\n`+
+      S.database.map((db,i)=>`\n--- Script de référence ${i+1} : ${db.name} ---\n${db.content||'[contenu non disponible]'}`).join('\n')
+    : '';
+  const isVar=ctx==='var';
+  return `${pf.global||'Tu es expert en copywriting OnlyFans. Conserve toujours les tags (G1, G2, PPV, 💵, 🚫).'}
+FR — Parler: ${pf['fr-parler']||'Registre parlé naturel, abréviations.'}
+FR — Chatter: ${pf['fr-chatter']||'Messages rythmés, tension progressive.'}
+EN — Parler: ${pf['en-parler']||'American casual, contractions.'}
+EN — Chatter: ${pf['en-chatter']||'Short punchy messages, build anticipation.'}
+${tagsStr?'\nPARAMÈTRES: '+tagsStr:''}${nicheP?'\n'+nicheP:''}${physP?'\n'+physP:''}${ip?'\nPROMPT SPÉCIFIQUE: '+ip:''}${mediaStr}${dbRef}
+${isVar?'\nSCRIPT SOURCE (base du thème, logique et vibe — s\'appuyer aussi sur la base de données pour la qualité):\n'+sc:'\n'+(pf.neufs||'Crée un script complet avec accroche progressive, montée en intensité, PPV aux positions de la commande média, variations 💵 et 🚫.')}
+
+NE TRADUIS PAS LITTÉRALEMENT — réécris dans le style natif de chaque langue selon les instructions.
+Conserve exactement les tags (G1, G2... PPV, 💵, 🚫).
+
+=== VERSION FR ===
+[script complet en français]
+=== VERSION EN ===
+[script complet en anglais]`;
+}
+
+async function generate(ctx){
+  const btn=document.getElementById(ctx==='var'?'varBtn':'genBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Génération en cours...';
+  let sc='';
+  if(ctx==='var'){try{sc=await document.getElementById('varFile').files[0].text();}catch(e){sc='[Contenu script uploadé]';}}
+  if(!S.apiKey){S[ctx].result={fr:'Clé API manquante — va dans Configuration.',en:'API key missing — go to Configuration.'};showResult(ctx);btn.disabled=false;btn.textContent=ctx==='var'?'Générer variation FR + EN':'Générer script FR + EN';return;}
+  try{
+    const res=await fetch('https://api.mistral.ai/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.apiKey},body:JSON.stringify({model:'mistral-large-latest',messages:[{role:'user',content:buildPrompt(ctx,sc)}],max_tokens:4000,temperature:0.85})});
+    const data=await res.json();
+    if(data.error){S[ctx].result={fr:'Erreur API: '+data.error.message,en:'API Error: '+data.error.message};}
+    else{
+      const text=data.choices?.[0]?.message?.content||'';
+      const frM=text.match(/=== VERSION FR ===([\s\S]*?)(?:=== VERSION EN ===|$)/);
+      const enM=text.match(/=== VERSION EN ===([\s\S]*?)$/);
+      S[ctx].result.fr=frM?frM[1].trim():text;
+      S[ctx].result.en=enM?enM[1].trim():'(EN non généré)';
+    }
+  }catch(e){S[ctx].result={fr:'Erreur de connexion à Mistral.',en:'Connection error to Mistral.'};}
+  showResult(ctx);btn.disabled=false;btn.textContent=ctx==='var'?'Générer variation FR + EN':'Générer script FR + EN';
+}
+
+function showResult(ctx){
+  const area=document.getElementById(ctx+'Result');area.style.display='block';
+  document.getElementById(ctx+'Content').textContent=S[ctx].result.fr;
+  document.getElementById(ctx+'GenName').textContent=document.getElementById(ctx+'Name').value||'';
+  area.querySelectorAll('.rtab').forEach((t,i)=>t.classList.toggle('active',i===0));
+}
+function switchTab(ctx,lang,btn){document.getElementById(ctx+'Content').textContent=S[ctx].result[lang];document.getElementById(ctx+'Result').querySelectorAll('.rtab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');}
+function saveToFavs(ctx){const name=document.getElementById(ctx+'Name').value||'Script_'+Date.now();S.favs.unshift({id:Date.now(),name,fr:S[ctx].result.fr,en:S[ctx].result.en,uses:0});clearResult(ctx);alert('✓ Enregistré en favori !');}
+function dlResult(ctx){const name=document.getElementById(ctx+'Name').value||'script';const blob=new Blob([`VERSION FR\n\n${S[ctx].result.fr}\n\n\nVERSION EN\n\n${S[ctx].result.en}`],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'.txt';a.click();}
+function clearResult(ctx){document.getElementById(ctx+'Result').style.display='none';S[ctx].result={fr:'',en:''};}
+function openPrevModal(ctx){S.preview={ctx,favId:null,lang:'fr'};document.getElementById('prevTitle').textContent='Aperçu — '+(document.getElementById(ctx+'Name').value||'Script');document.getElementById('prevBody').textContent=S[ctx].result.fr;document.querySelectorAll('.prev-tab').forEach((t,i)=>t.classList.toggle('active',i===0));document.getElementById('prevOverlay').classList.add('open');}
+function closePrevModal(){document.getElementById('prevOverlay').classList.remove('open');}
+function closePrevOut(e){if(e.target===document.getElementById('prevOverlay'))closePrevModal();}
+function switchPrevTab(lang,btn){S.preview.lang=lang;if(S.preview.ctx)document.getElementById('prevBody').textContent=S[S.preview.ctx].result[lang];else if(S.preview.favId){const f=S.favs.find(x=>x.id===S.preview.favId);if(f)document.getElementById('prevBody').textContent=f[lang];}document.querySelectorAll('.prev-tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');}
+function saveFromPreview(){const ctx=S.preview.ctx;if(!ctx)return;const name=document.getElementById(ctx+'Name').value||'Script_'+Date.now();S.favs.unshift({id:Date.now(),name,fr:S[ctx].result.fr,en:S[ctx].result.en,uses:0});closePrevModal();clearResult(ctx);alert('✓ Enregistré en favori !');}
+function dlFromPreview(){const ctx=S.preview.ctx;const fid=S.preview.favId;let fr='',en='',name='script';if(ctx){fr=S[ctx].result.fr;en=S[ctx].result.en;name=document.getElementById(ctx+'Name').value||'script';}else if(fid){const f=S.favs.find(x=>x.id===fid);if(f){fr=f.fr;en=f.en;name=f.name;}}const blob=new Blob([`VERSION FR\n\n${fr}\n\n\nVERSION EN\n\n${en}`],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name+'.txt';a.click();}
+
+function renderLib(){const list=document.getElementById('libList');if(!list)return;if(!S.prompts.length){list.innerHTML='<div class="empty">Aucun prompt spécifique enregistré</div>';return;}list.innerHTML='';S.prompts.forEach(p=>{const d=document.createElement('div');d.className='litem';d.innerHTML=`<div class="lhd"><div class="lname">${p.fav?'<span class="star">★</span>':''} ${p.name}</div><div class="lacts"><button class="ibtn" onclick="toggleFavP(${p.id})">${p.fav?'★':'☆'}</button><button class="ibtn" onclick="editP(${p.id})">✎</button><button class="ibtn" onclick="delP(${p.id})">✕</button></div></div><div class="ldesc">${p.desc}</div><div class="lprev">${p.content}</div><div class="eform" id="ef-${p.id}"><input id="en-${p.id}" value="${p.name}" placeholder="Nom"><input id="ed-${p.id}" value="${p.desc}" placeholder="Description"><textarea id="ec-${p.id}">${p.content}</textarea><div class="eacts"><button class="sbtn" onclick="saveP(${p.id})">Enregistrer</button><button class="cbtn" onclick="cancelP(${p.id})">Annuler</button></div></div>`;list.appendChild(d);});}
+function addPrompt(){const p={id:Date.now(),name:'Nouveau prompt',desc:'',content:'',fav:false};S.prompts.unshift(p);renderLib();editP(p.id);}
+function editP(id){document.querySelectorAll('.eform').forEach(f=>f.classList.remove('open'));document.getElementById('ef-'+id)?.classList.add('open');}
+function cancelP(id){document.getElementById('ef-'+id)?.classList.remove('open');}
+function saveP(id){const p=S.prompts.find(x=>x.id===id);p.name=document.getElementById('en-'+id).value;p.desc=document.getElementById('ed-'+id).value;p.content=document.getElementById('ec-'+id).value;renderLib();}
+function delP(id){if(confirm('Supprimer ?')){S.prompts=S.prompts.filter(p=>p.id!==id);renderLib();}}
+function toggleFavP(id){const p=S.prompts.find(x=>x.id===id);p.fav=!p.fav;renderLib();}
+
+function renderFavs(){const list=document.getElementById('favList');if(!S.favs.length){list.innerHTML='<div class="empty">Aucun favori</div>';return;}list.innerHTML='';S.favs.forEach(f=>{const d=document.createElement('div');d.className='fitem';d.innerHTML=`<div class="fhd"><div class="fname">${f.name}</div><div class="ubadge"><button class="ubtn" onclick="incUse(${f.id})">+</button><span>${f.uses} util.</span></div></div><div class="ltabs"><button class="ltab active" onclick="switchFavLang(this,${f.id},'fr')">FR</button><button class="ltab" onclick="switchFavLang(this,${f.id},'en')">EN</button></div><div class="fprev" id="fp-${f.id}">${f.fr}</div><div class="facts"><button class="ract" onclick="openFavPrev(${f.id})">👁 Aperçu</button><button class="ract" onclick="dlFav(${f.id})">⬇ Download</button><button class="ract" onclick="delFav(${f.id})">✕</button></div>`;list.appendChild(d);});}
+function incUse(id){S.favs.find(f=>f.id===id).uses++;renderFavs();}
+function switchFavLang(btn,id,lang){document.getElementById('fp-'+id).textContent=S.favs.find(f=>f.id===id)[lang];btn.parentElement.querySelectorAll('.ltab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');}
+function openFavPrev(id){const f=S.favs.find(x=>x.id===id);S.preview={ctx:null,favId:id,lang:'fr'};document.getElementById('prevTitle').textContent='Aperçu — '+f.name;document.getElementById('prevBody').textContent=f.fr;document.querySelectorAll('.prev-tab').forEach((t,i)=>t.classList.toggle('active',i===0));document.getElementById('prevOverlay').classList.add('open');}
+function dlFav(id){const f=S.favs.find(x=>x.id===id);const blob=new Blob([`VERSION FR\n\n${f.fr}\n\n\nVERSION EN\n\n${f.en}`],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=f.name+'.txt';a.click();}
+function delFav(id){if(confirm('Supprimer ?')){S.favs=S.favs.filter(f=>f.id!==id);renderFavs();}}
+
+function renderDb(){const list=document.getElementById('dbList');if(!S.database.length){list.innerHTML='<div class="empty">Aucun script — ajoute tes scripts xlsx de référence</div>';return;}list.innerHTML='';S.database.forEach(db=>{const d=document.createElement('div');d.className='db-item';d.innerHTML=`<div><div class="db-name">${db.name}</div><div class="db-meta">${db.size} · ${db.date}</div></div><button class="ibtn" onclick="delDb(${db.id})">✕</button>`;list.appendChild(d);});}
+function addToDb(inp){
+  if(!inp.files.length)return;
+  Array.from(inp.files).forEach(f=>{
+    const id=Date.now()+Math.random();
+    const reader=new FileReader();
+    reader.onload=e=>{
+      try{
+        const data=new Uint8Array(e.target.result);
+        const wb=XLSX.read(data,{type:'array'});
+        let content='';
+        wb.SheetNames.forEach(sheetName=>{
+          const ws=wb.Sheets[sheetName];
+          const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+          rows.forEach(row=>{const line=row.filter(c=>c!=='').join(' | ');if(line.trim())content+=line+'\n';});
+          content+='\n';
+        });
+        S.database.push({id,name:f.name,size:Math.round(f.size/1024)+'KB',date:new Date().toLocaleDateString('fr-FR'),content:content.trim()});
+      }catch(err){
+        S.database.push({id,name:f.name,size:Math.round(f.size/1024)+'KB',date:new Date().toLocaleDateString('fr-FR'),content:'[Erreur lecture]'});
+      }
+      renderDb();
+    };
+    reader.readAsArrayBuffer(f);
+  });
+}
+function delDb(id){if(confirm('Retirer ?')){S.database=S.database.filter(d=>d.id!==id);renderDb();}}
+
+function renderMediaList(){const list=document.getElementById('mediaList');if(!S.medias.length){list.innerHTML='<div class="empty">Aucune commande média</div>';return;}list.innerHTML='';S.medias.forEach(m=>{const d=document.createElement('div');d.className='cmitem';const ppvHtml=m.ppvs.map(p=>`<div class="ppv-row"><div class="ppv-num">${p.label}</div><div class="ppv-val">${p.content}</div></div>`).join('');d.innerHTML=`<div class="lhd"><div class="lname">${m.name} <span style="font-size:10px;color:#aaa;font-weight:400;">${m.ppvs.length} PPV</span></div><div class="lacts"><button class="ibtn" onclick="editM(${m.id})">✎</button><button class="ibtn" onclick="delM(${m.id})">✕</button></div></div><div class="ldesc">${m.desc}</div><div style="margin-top:8px;">${ppvHtml}</div><div class="eform" id="cmef-${m.id}"><input id="cmn-${m.id}" value="${m.name}" placeholder="Nom" style="margin-bottom:5px;font-size:11px;padding:6px 8px;border:1px solid #e5e5e5;border-radius:8px;background:#f5f5f5;color:#1a1a1a;font-family:inherit;width:100%;"><input id="cmd-${m.id}" value="${m.desc}" placeholder="Description" style="margin-bottom:7px;font-size:11px;padding:6px 8px;border:1px solid #e5e5e5;border-radius:8px;background:#f5f5f5;color:#1a1a1a;font-family:inherit;width:100%;"><div id="ppved-${m.id}"></div><button class="appv" onclick="addPPV(${m.id})">+ PPV</button><div class="eacts" style="margin-top:6px;"><button class="sbtn" onclick="saveM(${m.id})">Enregistrer</button><button class="cbtn" onclick="cancelM(${m.id})">Annuler</button></div></div>`;list.appendChild(d);});}
+function addMedia(){const m={id:Date.now(),name:'Nouvelle commande',desc:'',ppvs:[{label:'PPV 1',content:''}]};S.medias.unshift(m);renderMediaList();editM(m.id);}
+function editM(id){document.querySelectorAll('.eform').forEach(f=>f.classList.remove('open'));const m=S.medias.find(x=>x.id===id);renderPPVed(id,m.ppvs);document.getElementById('cmef-'+id).classList.add('open');}
+function cancelM(id){document.getElementById('cmef-'+id).classList.remove('open');}
+function renderPPVed(mid,ppvs){const c=document.getElementById('ppved-'+mid);c.innerHTML='';ppvs.forEach((p,i)=>{const r=document.createElement('div');r.className='ppved';r.innerHTML=`<input value="${p.label}" id="ppl-${mid}-${i}" placeholder="Label"><input value="${p.content}" id="ppc-${mid}-${i}" placeholder="Contenu média"><button class="dppv" onclick="delPPV(${mid},${i})">✕</button>`;c.appendChild(r);});}
+function addPPV(mid){const m=S.medias.find(x=>x.id===mid);m.ppvs.push({label:'PPV '+(m.ppvs.length+1),content:''});renderPPVed(mid,m.ppvs);}
+function delPPV(mid,i){const m=S.medias.find(x=>x.id===mid);m.ppvs.splice(i,1);renderPPVed(mid,m.ppvs);}
+function saveM(id){const m=S.medias.find(x=>x.id===id);m.name=document.getElementById('cmn-'+id).value;m.desc=document.getElementById('cmd-'+id).value;m.ppvs=m.ppvs.map((p,i)=>({label:document.getElementById('ppl-'+id+'-'+i).value,content:document.getElementById('ppc-'+id+'-'+i).value}));renderMediaList();}
+function delM(id){if(confirm('Supprimer ?')){S.medias=S.medias.filter(m=>m.id!==id);renderMediaList();}}
+
+function renderPromptPage(){
+  const niches=['GFE','Normale','MILF','Gamer'];
+  const physiques=['Gros seins','Grosses fesses','Fine','Chubby','Fat','Grande','Petite'];
+  document.getElementById('p-niches-list').innerHTML=niches.map(n=>`<div class="p-row"><div class="p-label">${n}</div><div class="p-desc">Ton et formulations spécifiques à la niche ${n}.</div><textarea class="p-textarea" id="p-niche-${n}" rows="3" placeholder="Ex: Pour ${n}...">${S.pfields.niches[n]||''}</textarea><button class="p-save" onclick="saveNiche('${n}')">Enregistrer</button><span class="p-saved" id="ps2-niche-${n}">✓</span></div>`).join('');
+  document.getElementById('p-physique-list').innerHTML=physiques.map(ph=>`<div class="p-row"><div class="p-label">${ph}</div><div class="p-desc">Comment intégrer ce physique dans l'écriture.</div><textarea class="p-textarea" id="p-ph-${ph.replace(/ /g,'_')}" rows="3" placeholder="Ex: Pour ${ph}...">${S.pfields.physique[ph]||''}</textarea><button class="p-save" onclick="savePhysique('${ph}')">Enregistrer</button><span class="p-saved" id="ps2-ph-${ph.replace(/ /g,'_')}">✓</span></div>`).join('');
+  ['global','fr-parler','fr-chatter','en-parler','en-chatter','neufs'].forEach(k=>{const el=document.getElementById('p-'+k);if(el)el.value=S.pfields[k]||'';});
+}
+function saveP2(key){const el=document.getElementById('p-'+key);if(!el)return;S.pfields[key]=el.value;flash('ps2-'+key);}
+function saveNiche(n){S.pfields.niches[n]=document.getElementById('p-niche-'+n).value;flash('ps2-niche-'+n);}
+function savePhysique(ph){S.pfields.physique[ph]=document.getElementById('p-ph-'+ph.replace(/ /g,'_')).value;flash('ps2-ph-'+ph.replace(/ /g,'_'));}
+function flash(id){const el=document.getElementById(id);if(!el)return;el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}
+function saveConfig(){S.apiKey=document.getElementById('apiKey').value;localStorage.setItem('sf_apikey',S.apiKey);flash('cfgSaved');}
+
+// Charger la clé API au démarrage
+window.onload=()=>{const k=localStorage.getItem('sf_apikey');if(k)S.apiKey=k;};
+</script>
+</body>
+</html>
